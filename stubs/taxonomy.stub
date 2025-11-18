@@ -1,0 +1,36 @@
+<?php
+
+namespace App\Syndicate\Taxonomist\Taxonomies;
+
+use Syndicate\Taxonomist\Contracts\Taxonomy;
+
+enum {{ class }}: string implements Taxonomy
+{
+    case A = 'a';
+    case B = 'b';
+    case C = 'c';
+
+    public static function getId(): string
+    {
+        return '{{ id }}';
+    }
+
+    public static function getName(): string
+    {
+        return '{{ name }}';
+    }
+
+    public function getLabel(): ?string
+    {
+        return match ($this) {
+            self::A => 'A',
+            self::B => 'B',
+            self::C => 'C',
+        };
+    }
+
+    public function getParent(): ?Taxonomy
+    {
+        return null;
+    }
+}

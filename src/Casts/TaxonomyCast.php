@@ -4,7 +4,7 @@ namespace Syndicate\Taxonomist\Casts;
 
 use Illuminate\Contracts\Database\Eloquent\CastsAttributes;
 use Illuminate\Database\Eloquent\Model;
-use Syndicate\Taxonomist\Contract\Taxonomy;
+use Syndicate\Taxonomist\Contracts\Taxonomy;
 
 class TaxonomyCast implements CastsAttributes
 {

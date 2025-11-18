@@ -4,6 +4,8 @@ namespace Syndicate\Taxonomist;
 
 use Spatie\LaravelPackageTools\Package;
 use Spatie\LaravelPackageTools\PackageServiceProvider;
+use Syndicate\Taxonomist\Commands\InstallTaxonomistCommand;
+use Syndicate\Taxonomist\Commands\MakeTaxonomyCommand;
 use Syndicate\Taxonomist\Commands\SeedTaxonomyCommand;
 
 class TaxonomistServiceProvider extends PackageServiceProvider
@@ -13,7 +15,8 @@ class TaxonomistServiceProvider extends PackageServiceProvider
         $package
             ->name('taxonomist')
             ->hasViews()
-            ->hasMigration('create_taxonomist_table')
-            ->hasCommand(SeedTaxonomyCommand::class);
+            ->hasMigration('create_terms_table')
+            ->hasMigration('create_termables_table')
+            ->hasCommands(SeedTaxonomyCommand::class, MakeTaxonomyCommand::class, InstallTaxonomistCommand::class);
     }
 }

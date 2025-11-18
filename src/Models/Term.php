@@ -5,18 +5,13 @@ namespace Syndicate\Taxonomist\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Database\Eloquent\Relations\MorphTo;
 use Syndicate\Taxonomist\Casts\TaxonomyCast;
 
 class Term extends Model
 {
     public $table = 'terms';
 
-    protected $guarded = [
-        'id',
-        'fqn',
-        'case'
-    ];
+    protected $guarded = ['id'];
 
     public function termables(): HasMany
     {

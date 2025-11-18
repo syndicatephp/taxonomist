@@ -3,124 +3,132 @@
 namespace Syndicate\Taxonomist\Commands;
 
 use Illuminate\Console\Command;
+use Illuminate\Filesystem\Filesystem;
+use Syndicate\Taxonomist\Contracts\Taxonomy;
+use Syndicate\Taxonomist\Models\Term;
+use function Laravel\Prompts\error;
+use function Laravel\Prompts\info;
+use function Laravel\Prompts\select;
+use function Laravel\Prompts\text;
 
 class SeedTaxonomyCommand extends Command
 {
-    protected $signature = 'seed:syndicate-taxonomy';
+    protected $signature = 'seed:taxonomy {taxonomy? : The name/fqn of the taxonomy}';
 
-    private int $created = 0;
-    private int $skipped = 0;
-    private int $updated = 0;
-    private int $parented = 0;
+    public function __construct(protected Filesystem $files)
+    {
+        parent::__construct();
+    }
 
     public function handle(): int
     {
-        foreach ($enumClasses as $enumClass) {
-            if (!is_subclass_of($enumClass, CategoryEnum::class)) {
-                $this->error("{$enumClass} not of type ".CategoryEnum::class);
-                continue;
+        $nameArg = $this->argument('taxonomy');
+        $name = is_string($nameArg) ? trim($nameArg) : '';
+
+        if (empty($name)) {
+            $options = $this->files->files(app_path('Syndicate/Taxonomist/Taxonomies'));
+            $options = array_map(fn($file) => str($file)->afterLast('\\')->beforeLast('.php')->toString(), $options);
+
+
+            $taxonomy = select(
+                label: 'Which taxonomies would you like to seed?',
+                options: array_merge(['All', 'Manual Input'], $options),
+                default: 'All',
+            );
+
+            if ($taxonomy === 'All') {
+                $taxonomy = $options;
+            } elseif ($taxonomy === 'Manual Input') {
+                $taxonomy = text(
+                    label: 'What is the fqn of the taxonomy?',
+                    placeholder: 'E.g. App\Enums\ProductTaxonomy',
+                    required: true,
+                    hint: 'The Taxonomy affix will be automatically added to the class name.',
+                );
             }
+        } else {
+            $taxonomy = $name;
+        }
 
-            $this->resetCounters();
-            $this->createOrUpdate($enumClass);
-            $this->addHierarchy($enumClass);
-
-            $this->info("Successfully seeded {$enumClass::getCategoryLabel()}");
-
-            $this->printCounters();
-            $this->flushCacheFor($enumClass);
+        if (is_array($taxonomy)) {
+            foreach ($taxonomy as $tax) {
+                $this->handleTaxonomy($tax);
+            }
+        } else {
+            $this->handleTaxonomy($taxonomy);
         }
 
         return self::SUCCESS;
     }
 
-    protected function resetCounters(): void
+    public function handleTaxonomy(string $taxonomy): void
     {
-        $this->created = 0;
-        $this->skipped = 0;
-        $this->updated = 0;
-        $this->parented = 0;
+        if (!class_exists($taxonomy)) {
+            $taxonomy = str($taxonomy)->prepend('App\\Syndicate\\Taxonomist\\Taxonomies\\')->toString();
+
+            if (!class_exists($taxonomy)) {
+                error("$taxonomy does not exist.");
+            }
+        }
+
+        if (!is_subclass_of($taxonomy, Taxonomy::class)) {
+            error("$taxonomy must implement ".Taxonomy::class.'.');
+        }
+
+        $this->seedTerms($taxonomy);
+        $this->seedParentRelations($taxonomy);
+
+        /** @var class-string<Taxonomy> $taxonomy */
+        info("Successfully seeded {$taxonomy::getName()}");
     }
 
     /**
-     * @param  class-string<CategoryEnum>  $enumClass
+     * @param  class-string<Taxonomy>  $taxonomy
      * @return void
      */
-    public function createOrUpdate(string $enumClass): void
+    public function seedTerms(string $taxonomy): void
     {
-        $categories = Category::enum($enumClass)->get();
-
-        foreach ($enumClass::cases() as $case) {
-            if ($this->option('update')) {
-                Category::updateOrCreate([
-                    'enum' => $case->value,
-                    'class_enum' => $enumClass::getId(),
-                ], [
-                    'name' => $case->getLabel(),
-                ]);
-                $this->updated++;
-                continue;
-            }
-
-            if ($categories->where('enum', $case->value)->count() > 0) {
-                $this->skipped++;
-                continue;
-            }
-
-            Category::create([
+        foreach ($taxonomy::cases() as $case) {
+            Term::updateOrCreate([
+                'case' => $case->value,
+                'taxonomy' => $taxonomy::getId(),
+            ], [
                 'name' => $case->getLabel(),
-                'enum' => $case->value,
-                'class_enum' => $enumClass::getId(),
+                'fqn' => get_class($case),
             ]);
-            $this->created++;
         }
     }
 
     /**
-     * @param  class-string<CategoryEnum>  $enumClass
+     * @param  class-string<Taxonomy>  $taxonomy
      * @return void
      */
-    public function addHierarchy(string $enumClass): void
+    public function seedParentRelations(string $taxonomy): void
     {
-        $categories = Category::all();
+        $terms = Term::all();
 
-        foreach ($enumClass::cases() as $case) {
-            if (!$case->getParent()) {
+        foreach ($taxonomy::cases() as $case) {
+            if ($case->getParent() === null) {
                 continue;
             }
 
-            $parent = $categories->where('enum', $case->getParent()->value)->where('class_enum',
-                $case->getParent()::getId())->first();
+            $parent = $terms
+                ->where('taxonomy', $case->getParent()::getId())
+                ->where('case', $case->getParent()->value)
+                ->first();
 
-            if (!$parent) {
-                $this->error("Parent {$case->getParent()->value} not found for {$case->value}");
+            if ($parent === null) {
                 continue;
             }
 
-            $categories->where('enum', $case->value)->where('class_enum', $enumClass::getId())
-                ->first()
-                ->update([
-                    'parent_id' => $parent->id,
-                ]);
+            $child = $terms
+                ->where('taxonomy', $taxonomy::getId())
+                ->where('case', $case->value)
+                ->first();
 
-            $this->parented++;
-        }
-    }
-
-    protected function printCounters(): void
-    {
-        $this->info("Created: {$this->created}\nSkipped: {$this->skipped}\nUpdated: {$this->updated}\nParented: {$this->parented}");
-    }
-
-    /**
-     * @param  class-string<CategoryEnum>  $enumClass
-     * @return void
-     */
-    protected function flushCacheFor(string $enumClass): void
-    {
-        $flushed = app(CategoryService::class)->flushCacheFor($enumClass);
-        if ($flushed) {
-            $this->info("Cache flushed for {$enumClass::getCategoryLabel()}");
+            $child->update([
+                'parent_id' => $parent->id,
+            ]);
         }
     }
 }

@@ -1,6 +1,6 @@
 <?php
 
-namespace Syndicate\Taxonomist\Contract;
+namespace Syndicate\Taxonomist\Contracts;
 
 use BackedEnum;
 use Filament\Support\Contracts\HasLabel;

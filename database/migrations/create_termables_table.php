@@ -9,14 +9,19 @@ return new class extends Migration {
     public function up(): void
     {
         Schema::create('termables', function (Blueprint $table) {
-            // Pivot Connection
+            // === Term ===
             $table->foreignIdFor(Term::class)->index()->constrained()->cascadeOnDelete();
+
+            // === Model ===
             $table->morphs('model');
 
-            // Sorting
+            // === Sorting ===
             $table->unsignedInteger('order_column')->nullable()->index();
 
-            // Created, Updated, Deleted
+            // === Constraints ===
+            $table->unique(['term_id', 'model_type', 'model_id']);
+
+            // === Timestamps ===
             $table->timestamps();
         });
     }

@@ -23,7 +23,7 @@ return new class extends Migration {
             $table->foreignId('parent_id')->nullable()->constrained('terms')->nullOnDelete();
 
             // === Constraints ===
-            $table->unique(['case', 'taxonomy']);
+            $table->unique(['taxonomy', 'case']);
 
             // === Timestamps ===
             $table->timestamps();
