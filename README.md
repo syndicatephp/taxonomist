@@ -1,4 +1,6 @@
-# Enum driven taxonomies for laravel/filament.
+# Syndicate || Taxonomist
+
+Enum driven taxonomies for laravel // filament.
 
 ## Installation
 
