@@ -4,7 +4,6 @@ namespace Syndicate\Taxonomist;
 
 use Spatie\LaravelPackageTools\Package;
 use Spatie\LaravelPackageTools\PackageServiceProvider;
-use Syndicate\Librarian\Services\LibrarianService;
 use Syndicate\Taxonomist\Commands\InstallTaxonomistCommand;
 use Syndicate\Taxonomist\Commands\MakeTaxonomyCommand;
 use Syndicate\Taxonomist\Commands\SeedTaxonomyCommand;
