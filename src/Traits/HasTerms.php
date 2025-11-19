@@ -35,6 +35,8 @@ trait HasTerms
     protected function taxonomyRelation(string $taxonomy): MorphToMany
     {
         return $this->morphToMany(Term::class, 'model', 'termables')
-            ->where('taxonomy_name', $taxonomy::getId());
+            ->where('taxonomy_name', $taxonomy::getId())
+            ->wherePivot('taxonomy', $taxonomy::getId())
+            ->withPivotValue('taxonomy', $taxonomy::getId());
     }
 }

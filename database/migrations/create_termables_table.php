@@ -21,6 +21,9 @@ return new class extends Migration {
             // === Constraints ===
             $table->unique(['term_id', 'model_type', 'model_id']);
 
+            // === Taxonomy for native sync() ===
+            $table->string('taxonomy')->index();
+
             // === Overriding Term ===
             $table->json('override')->nullable();
             $table->json('meta')->nullable();
