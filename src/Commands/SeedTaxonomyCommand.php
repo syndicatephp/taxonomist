@@ -118,6 +118,7 @@ class SeedTaxonomyCommand extends Command
                 ->first();
 
             if ($parent === null) {
+                error("Parent term {$case->getParent()->value} not found for {$case->value}.");
                 continue;
             }
 

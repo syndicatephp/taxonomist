@@ -6,7 +6,9 @@
         "laravel",
         "taxonomist",
         "enum",
-        "filament"
+        "filament",
+        "taxonomy",
+        "terms"
     ],
     "homepage": "https://github.com/syndicatephp/taxonomist",
     "license": "MIT",
@@ -67,10 +69,7 @@
         "laravel": {
             "providers": [
                 "Syndicate\\Taxonomist\\TaxonomistServiceProvider"
-            ],
-            "aliases": {
-                "Taxonomist": "Syndicate\\Taxonomist\\Facades\\Taxonomist"
-            }
+            ]
         }
     },
     "minimum-stability": "dev",

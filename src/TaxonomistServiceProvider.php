@@ -14,9 +14,7 @@ class TaxonomistServiceProvider extends PackageServiceProvider
     {
         $package
             ->name('taxonomist')
-            ->hasViews()
-            ->hasMigration('create_terms_table')
-            ->hasMigration('create_termables_table')
+            ->hasMigrations('create_terms_table', 'create_termables_table')
             ->hasCommands(SeedTaxonomyCommand::class, MakeTaxonomyCommand::class, InstallTaxonomistCommand::class);
     }
 }
