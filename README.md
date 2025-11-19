@@ -61,6 +61,16 @@ After configuring the cases of a taxonomy, seed the taxonomy via the command lin
 php artisan seed:taxonomy
 ```
 
+## Filament
+
+There is a dedicated Select for Taxonomies.
+
+```bash
+use Syndicate\Taxonomist\Filament\TaxonomySelect;
+TaxonomySelect::make('relationName')
+    ->taxonomy(TechnologyTaxonomy::class)
+```
+
 ## Misc
 
 ### Adding Relations to the Terms Model
