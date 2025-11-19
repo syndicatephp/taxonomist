@@ -8,22 +8,30 @@ return new class extends Migration {
     public function up(): void
     {
         Schema::create('terms', function (Blueprint $table) {
-            // === Identifier ===
+            // === Identifiers ===
             $table->id();
-
-            // === Enum+Case matching ===
-            $table->string('case');
-            $table->string('taxonomy');
-            $table->string('fqn');
+            $table->string('slug');
 
             // === UI Label  ===
-            $table->string('name')->nullable();
+            $table->string('name');
+
+            // === Taxonomy Association ===
+            $table->string('taxonomy_name');
+
+            // === If not null, this row is 'owned' by code ===
+            $table->string('taxonomy_fqn')->nullable();
+
+            // === Data ===
+            $table->json('meta')->nullable();
 
             // === Hierarchy ===
             $table->foreignId('parent_id')->nullable()->constrained('terms')->nullOnDelete();
 
+            // === Sorting ===
+            $table->unsignedInteger('order_column')->nullable()->index();
+
             // === Constraints ===
-            $table->unique(['taxonomy', 'case']);
+            $table->unique(['taxonomy_name', 'slug']);
 
             // === Timestamps ===
             $table->timestamps();

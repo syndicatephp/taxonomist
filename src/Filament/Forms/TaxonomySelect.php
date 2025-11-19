@@ -3,34 +3,65 @@
 namespace Syndicate\Taxonomist\Filament\Forms;
 
 use Filament\Forms\Components\Select;
+use Illuminate\Database\Eloquent\Model;
+use Syndicate\Taxonomist\Contracts\Taxonomy;
+use Syndicate\Taxonomist\Services\TaxonomyService;
 
 class TaxonomySelect extends Select
 {
-//    /**
-//     * @param  class-string<Taxonomy>  $taxonomy
-//     * @return $this
-//     */
-//    public function taxonomy(string $taxonomy): self
-//    {
-//        return $this->options(
-//            Cache::remember('test-taxo2', 20, function () use ($taxonomy) {
-//                return Term::whereTaxonomy($taxonomy::getId())->get()->sortBy('name')
-//                    ->mapWithKeys(function (Term $category) {
-//                        return [$category->id => $category->name];
-//                    })->toArray();
-//            })
-//        );
-//    }
+    /**
+     * @param  class-string<Taxonomy>  $taxonomy
+     * @return $this
+     */
+    public function taxonomy(string $taxonomy): self
+    {
+        $options = resolve(TaxonomyService::class)->getTaxonomyOptions($taxonomy);
+
+        $this->options($options);
+
+        return $this;
+    }
 
     protected function setUp(): void
     {
         parent::setUp();
 
-        $this
-            ->preload()
-            ->label(str($this->name)->headline())
-            ->relationship($this->name, 'name')
-            ->multiple();
+        $this->multiple();
+
+        $this->searchable();
+        $this->preload();
+
+        $this->loadStateFromRelationshipsUsing(function (TaxonomySelect $component, ?Model $record) {
+            if (!$record) {
+                return;
+            }
+
+            $ids = $record->{$component->getName()}()
+                ->pluck('terms.id')
+                ->toArray();
+
+            $component->state($ids);
+        });
+
+        $this->saveRelationshipsUsing(function (TaxonomySelect $component, ?Model $record, $state) {
+            if (!$record) {
+                return;
+            }
+
+            $newState = collect($state ?? [])->map(fn($id) => (int) $id)->sort()->values()->toArray();
+
+            $existingState = $record->{$component->getName()}()
+                ->pluck('terms.id')
+                ->map(fn($id) => (int) $id)
+                ->sort()
+                ->values()
+                ->toArray();
+
+            if ($newState !== $existingState) {
+                $record->{$component->getName()}()->sync($newState);
+            }
+        });
+
+        $this->dehydrated(false);
     }
 }
-

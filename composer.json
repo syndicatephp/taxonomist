@@ -69,7 +69,10 @@
         "laravel": {
             "providers": [
                 "Syndicate\\Taxonomist\\TaxonomistServiceProvider"
-            ]
+            ],
+            "aliases": {
+                "Taxonomist": "Syndicate\\Taxonomist\\Facades\\Taxonomist"
+            }
         }
     },
     "minimum-stability": "dev",

@@ -4,9 +4,11 @@ namespace Syndicate\Taxonomist;
 
 use Spatie\LaravelPackageTools\Package;
 use Spatie\LaravelPackageTools\PackageServiceProvider;
+use Syndicate\Librarian\Services\LibrarianService;
 use Syndicate\Taxonomist\Commands\InstallTaxonomistCommand;
 use Syndicate\Taxonomist\Commands\MakeTaxonomyCommand;
 use Syndicate\Taxonomist\Commands\SeedTaxonomyCommand;
+use Syndicate\Taxonomist\Services\TaxonomyService;
 
 class TaxonomistServiceProvider extends PackageServiceProvider
 {
@@ -26,5 +28,7 @@ class TaxonomistServiceProvider extends PackageServiceProvider
                 __DIR__.'/../stubs' => base_path('stubs/syndicate/taxonomist'),
             ], 'taxonomist-stubs');
         }
+
+        $this->app->singleton(TaxonomyService::class);
     }
 }

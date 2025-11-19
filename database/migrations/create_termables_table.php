@@ -21,6 +21,10 @@ return new class extends Migration {
             // === Constraints ===
             $table->unique(['term_id', 'model_type', 'model_id']);
 
+            // === Overriding Term ===
+            $table->json('override')->nullable();
+            $table->json('meta')->nullable();
+
             // === Timestamps ===
             $table->timestamps();
         });

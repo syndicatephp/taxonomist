@@ -6,6 +6,7 @@ use Illuminate\Console\Command;
 use Illuminate\Filesystem\Filesystem;
 use Syndicate\Taxonomist\Contracts\Taxonomy;
 use Syndicate\Taxonomist\Models\Term;
+use Syndicate\Taxonomist\Services\TaxonomyService;
 use function Laravel\Prompts\error;
 use function Laravel\Prompts\info;
 use function Laravel\Prompts\select;
@@ -15,7 +16,7 @@ class SeedTaxonomyCommand extends Command
 {
     protected $signature = 'seed:taxonomy {taxonomy? : The name/fqn of the taxonomy}';
 
-    public function __construct(protected Filesystem $files)
+    public function __construct(protected Filesystem $files, protected TaxonomyService $taxonomyService)
     {
         parent::__construct();
     }
@@ -61,6 +62,7 @@ class SeedTaxonomyCommand extends Command
         return self::SUCCESS;
     }
 
+
     public function handleTaxonomy(string $taxonomy): void
     {
         if (!class_exists($taxonomy)) {
@@ -77,6 +79,7 @@ class SeedTaxonomyCommand extends Command
 
         $this->seedTerms($taxonomy);
         $this->seedParentRelations($taxonomy);
+        $this->flushTaxonomy($taxonomy);
 
         /** @var class-string<Taxonomy> $taxonomy */
         info("Successfully seeded {$taxonomy::getName()}");
@@ -90,11 +93,11 @@ class SeedTaxonomyCommand extends Command
     {
         foreach ($taxonomy::cases() as $case) {
             Term::updateOrCreate([
-                'case' => $case->value,
-                'taxonomy' => $taxonomy::getId(),
+                'slug' => $case->value,
+                'taxonomy_name' => $taxonomy::getId(),
             ], [
                 'name' => $case->getLabel(),
-                'fqn' => get_class($case),
+                'taxonomy_fqn' => get_class($case),
             ]);
         }
     }
@@ -113,8 +116,8 @@ class SeedTaxonomyCommand extends Command
             }
 
             $parent = $terms
-                ->where('taxonomy', $case->getParent()::getId())
-                ->where('case', $case->getParent()->value)
+                ->where('taxonomy_name', $case->getParent()::getId())
+                ->where('slug', $case->getParent()->value)
                 ->first();
 
             if ($parent === null) {
@@ -123,13 +126,22 @@ class SeedTaxonomyCommand extends Command
             }
 
             $child = $terms
-                ->where('taxonomy', $taxonomy::getId())
-                ->where('case', $case->value)
+                ->where('taxonomy_name', $taxonomy::getId())
+                ->where('slug', $case->value)
                 ->first();
 
             $child->update([
                 'parent_id' => $parent->id,
             ]);
         }
+    }
+
+    /**
+     * @param  class-string<Taxonomy>  $taxonomy
+     * @return void
+     */
+    public function flushTaxonomy(string $taxonomy): void
+    {
+        $this->taxonomyService->flushCacheFor($taxonomy);
     }
 }
