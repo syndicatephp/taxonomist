@@ -87,7 +87,7 @@ class MakeTaxonomyCommand extends Command
 
     protected function stubPath(): string
     {
-        $published = base_path('stubs/taxonomist/taxonomy.stub');
+        $published = base_path('stubs/syndicate/taxonomist/taxonomy.stub');
 
         if (file_exists($published)) {
             return $published;

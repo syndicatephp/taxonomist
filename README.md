@@ -2,43 +2,107 @@
 
 ## Installation
 
+### Composer
+
 You can install the package via composer:
 
 ```bash
-composer require syndicatephp/taxonomist
+composer require syndicate/taxonomist
 ```
 
-You can publish and run the migrations with:
+[//]: # (### Install)
+
+[//]: # ()
+
+[//]: # (Run the installation command:)
+
+[//]: # ()
+
+[//]: # (```bash)
+
+[//]: # (php artisan install:taxonomist)
+
+[//]: # (```)
+
+### Migrate
+
+Publish and run the migrations:
 
 ```bash
-php artisan vendor:publish --tag="taxonomist-migrations"
+php artisan vendor:publish --tag=taxonomist-migrations
 php artisan migrate
 ```
 
-You can publish the config file with:
+### Stubs
+
+Optionally publish and customize the stubs:
 
 ```bash
-php artisan vendor:publish --tag="taxonomist-config"
-```
-
-This is the contents of the published config file:
-
-```php
-return [
-];
-```
-
-Optionally, you can publish the views using
-
-```bash
-php artisan vendor:publish --tag="taxonomist-views"
+php artisan vendor:publish --tag=taxonomist-stubs
 ```
 
 ## Usage
 
+### Make
+
+Make new taxonomies via the command line:
+
 ```php
-$taxonomist = new Syndicate\Taxonomist();
-echo $taxonomist->echoPhrase('Hello, Syndicate!');
+php artisan make:taxonomy
+```
+
+### Seed
+
+After configuring the cases of a taxonomy, seed the taxonomy via the command line:
+
+```bash
+php artisan seed:taxonomy
+```
+
+## Misc
+
+### Adding Relations to the Terms Model
+
+You can add relations to the term model for easier querying from the direction of the Term.
+
+```php
+use Illuminate\Database\Eloquent\Relations\MorphToMany;
+use Illuminate\Support\ServiceProvider;
+use Syndicate\Taxonomist\Models\Term;
+
+class AppServiceProvider extends ServiceProvider
+{
+    public function boot(): void
+    {
+        Term::resolveRelationUsing('products', function ($categoryModel): MorphToMany {
+            return $categoryModel->morphedByMany(Product::class, 'model', 'termables');
+        });
+    }
+}
+```
+
+### Using a scoped Term Model
+
+You can extend the base Term Model and scope it to a specific taxonomy.
+
+```php
+<?php
+ 
+namespace App\Models;
+ 
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Model;
+use App\Syndicate\Taxonomist\Taxonomies\ProductTaxonony;
+ 
+class ProductTerm extends Term
+{
+    protected static function booted(): void
+    {
+        static::addGlobalScope('product_term', function (Builder $builder) {
+            $builder->where('taxonomy', ProductTaxonony::getId());
+        });
+    }
+}
 ```
 
 ## Testing

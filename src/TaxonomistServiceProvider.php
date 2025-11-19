@@ -14,7 +14,17 @@ class TaxonomistServiceProvider extends PackageServiceProvider
     {
         $package
             ->name('taxonomist')
-            ->hasMigrations('create_terms_table', 'create_termables_table')
+            ->hasMigration('create_terms_table')
+            ->hasMigration('create_termables_table')
             ->hasCommands(SeedTaxonomyCommand::class, MakeTaxonomyCommand::class, InstallTaxonomistCommand::class);
+    }
+
+    public function bootingPackage(): void
+    {
+        if ($this->app->runningInConsole()) {
+            $this->publishes([
+                __DIR__.'/../stubs' => base_path('stubs/syndicate/taxonomist'),
+            ], 'taxonomist-stubs');
+        }
     }
 }
